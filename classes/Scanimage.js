@@ -43,6 +43,10 @@ module.exports = function () {
 		}
 
 		if (scanRequest.convertFormat !== 'tif') {
+			if (device.isFeatureSupported('--jpeg-quality')) {
+				cmd += ' --jpeg-quality ' + scanRequest["jpeg-quality"];
+			}
+			
 			cmd += ' | convert - ' + scanRequest.convertFormat + ':-';
 		}
 

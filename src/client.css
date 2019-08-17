@@ -77,3 +77,19 @@ h1 {
     display: none;
     z-index: 10;
 }
+
+.btn-group {
+    background-color: rgb(128, 128, 128, 0.5);
+    -moz-border-radius: 0.5em;
+    -webkit-border-radius: 0.5em;
+    border-radius: 0.5em;
+    margin-top: 30px;
+}
+
+#toast-container {
+    background-color: lightgreen;
+}
+
+.toast-message {
+    color: black;
+}

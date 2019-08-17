@@ -50,6 +50,7 @@ $(document).ready(function () {
                 mode: null,
                 brightness: 0,
                 contrast: 0,
+                "jpeg-quality": 0,
                 convertFormat: 'tif'
             };
         },
@@ -146,11 +147,15 @@ $(document).ready(function () {
 
                 case 'brightness':
                 case 'contrast':
+                case 'jpeg-quality':
+                    var $field = $("#" + field.id);
+                    var minVal = parseInt($field.attr("data-min"));
+                    var maxVal = parseInt($field.attr("data-max"));
                     var val = parseInt(field.value);
                     var $slider = $("#" + field.id + "_slider");
                     val = isNaN(val) ? $slider.slider("value") : val;
-                    if (val < -100) val = -100;
-                    if (val > 100) val = 100;
+                    if (val < minVal) val = minVal;
+                    if (val > maxVal) val = maxVal;
                     field.value = val;
                     data[field.id] = val;
                     $slider.slider("value", val);
@@ -183,7 +188,7 @@ $(document).ready(function () {
                     $("#image").attr('src', 'data:image/jpeg;base64,' + fileInfo.content);
                     $("#image").css('display', 'block');
                 }
-            });            
+            });
         },
 
         preview: function () {
@@ -214,7 +219,7 @@ $(document).ready(function () {
 
             var data = this.model.toJSON();
             data.device = page.device;
-            
+
             var request = {
                 url: 'scan',
                 type: "POST",
@@ -284,18 +289,45 @@ $(document).ready(function () {
 
         deviceSync: function (device) {
             this.device = device;
-            var modes = device.attributes.features['--mode'].options.split('|');
-            $mode = $('#mode');
-            _.each(modes, function (val) {
-                $mode.append('<option>' + val + '</option>');
-            });
+            var _this = this;
+            var buildOptions = function (name) {
+                var target = device.attributes.features['--' + name].options.split('|');
+                $target = $('#' + name);
+                $target.children().remove();
+                _.each(target, function (val) {
+                    $target.append('<option value="' + val.replace("dpi", "") + '">' + val.replace("dpi", "") + '</option>');
+                });
 
-            if (this.model.attributes.mode === null) {
-                this.model.attributes.mode = device.attributes.features['--mode'].default;
-            }
+                if (_this.model.attributes[name] === null) {
+                    _this.model.attributes[name] = device.attributes.features['--' + name].default;
+                }
+                $target.children('[value="' + _this.model.attributes[name] + '"]').attr('selected', 'selected');
+            };
+            buildOptions("mode");
+            buildOptions("resolution");
+
+            var updateSlider = function (name) {
+                var target = device.attributes.features['--' + name].options.split('..');
+                var $target = $("#" + name);
+                $target.attr("data-min", target[0]);
+                $target.attr("data-max", target[1]);
+                $("#" + name + "_slider").slider({
+                    min: target[0],
+                    max: target[1],
+                    value: 0,
+                    step: 1,
+                    slide: function (e, ui) {
+                        var $input = $("#" + name);
+                        $input.val(ui.value).change();
+                    }
+                });
+            };
+            updateSlider("brightness");
+            updateSlider("contrast");
+            updateSlider("jpeg-quality");
 
             $('#version').text(device.attributes.version);
-            
+
             // We've changed the UI mode options so refresh
             this.render();
         },
@@ -308,7 +340,7 @@ $(document).ready(function () {
                     $e.val(val);
                 }
 
-                if (id === 'contrast' || id === 'brightness') {
+                if (id === 'contrast' || id === 'brightness' || id === 'jpeg-quality') {
                     $e = this.$('#' + id + '_slider');
                     $e.slider('value', val);
                 }
@@ -325,7 +357,7 @@ $(document).ready(function () {
     var JcropManager = function (model) {
 
         var _this = this;
-        
+
         _this.dotsToMm = function (dots) {
             var millimetresPerDot = _this.millimetresPerInch / _this.previewDpi;
             return Math.round(dots * millimetresPerDot);

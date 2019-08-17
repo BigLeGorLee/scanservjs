@@ -9,7 +9,7 @@ var ScanRequest = function (def) {
 	System.extend(_this, ScanRequest.default, def);
 
 	var dateString = dateFormat(new Date(), 'yyyy-mm-dd HH.MM.ss');
-	_this.outputFilepath = Config.OutputDirectory + 'scan_' + dateString + '.' + _this.convertFormat;
+	_this.outputFilepath = def.outputFilepath || Config.OutputDirectory + 'scan_' + dateString + '.' + _this.convertFormat;
 
 	_this.validate = function () {
 		var errors = [];
